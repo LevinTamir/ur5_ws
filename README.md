@@ -3,16 +3,9 @@
 ### Create the Workspace and Clone the Repository
 
 ```bash
-mkdir -p <PATH>/ur5_ws/src
-cd <PATH>/ur5_ws/src
-git clone https://github.com/LevinTamir/ur5_ws.git
-```
-
-This repository contains submodules (like ur_simulation_gz). Initialize and update them:
-
-```bash
-cd <PATH>/ur5_ws/src
-git submodule update --init --recursive
+mkdir -p ~/ros2_workspaces/ur5_ws/src
+cd ~/ros2_workspaces/ur5_ws
+git clone git@github.com:LevinTamir/ur5_ws.git .
 ```
 
 ### Install Dependencies
