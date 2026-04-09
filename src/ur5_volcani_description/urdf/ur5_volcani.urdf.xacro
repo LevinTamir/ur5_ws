@@ -1,0 +1,461 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="$(arg name)">
+
+  <!-- Robot name parameter -->
+  <xacro:arg name="name" default="ur"/>
+
+  <!-- UR type and parameters -->
+  <xacro:arg name="ur_type" default="ur5x"/>
+  <xacro:arg name="tf_prefix" default="" />
+  <xacro:arg name="joint_limit_params" default="$(find ur_description)/config/$(arg ur_type)/joint_limits.yaml"/>
+  <xacro:arg name="kinematics_params" default="$(find ur_description)/config/$(arg ur_type)/default_kinematics.yaml"/>
+  <xacro:arg name="physical_params" default="$(find ur_description)/config/$(arg ur_type)/physical_parameters.yaml"/>
+  <xacro:arg name="visual_params" default="$(find ur_description)/config/$(arg ur_type)/visual_parameters.yaml"/>
+  <xacro:arg name="transmission_hw_interface" default=""/>
+  <xacro:arg name="safety_limits" default="false"/>
+  <xacro:arg name="safety_pos_margin" default="0.15"/>
+  <xacro:arg name="safety_k_position" default="20"/>
+  <xacro:arg name="simulation_controllers" default="" />
+  <xacro:arg name="ros_namespace" default="" />
+
+  <!-- Import UR macro and ros2_control config -->
+  <xacro:include filename="$(find ur_description)/urdf/ur_macro.xacro"/>
+  <xacro:include filename="$(find ur_simulation_gz)/urdf/ur_gz.ros2_control.xacro" />
+
+  <!-- ======================== WORLD ======================== -->
+  <link name="world" />
+
+  <!-- Table top at 0.98m height, rotated 180 deg yaw (same as volcaniarm) -->
+  <joint name="world_to_base" type="fixed">
+    <origin xyz="0 0 0.98" rpy="0 0 3.14159" />
+    <parent link="world" />
+    <child link="base_link" />
+  </joint>
+
+  <!-- ======================== TABLE TOP (base_link) ======================== -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0.0033183 1.7612E-06 -0.24794" rpy="0 0 0" />
+      <mass value="5.4796" />
+      <inertia ixx="0.36605" ixy="-2.0049E-09" ixz="1.5542E-08"
+               iyy="0.19294" iyz="-3.1213E-09" izz="0.31414" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/base_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ======================== TABLE LEGS ======================== -->
+
+  <!-- Front-left table leg -->
+  <link name="fl_table_leg_link">
+    <inertial>
+      <origin xyz="0 2.2204E-16 0.22347" rpy="0 0 0" />
+      <mass value="0.15157" />
+      <inertia ixx="0.0028107" ixy="-1.2462E-19" ixz="-4.3818E-20"
+               iyy="0.0028135" iyz="-1.2312E-20" izz="5.0184E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fl_table_leg_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fl_table_leg_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fl_table_leg_joint" type="fixed">
+    <origin xyz="0.34 0.698 -0.883" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="fl_table_leg_link" />
+  </joint>
+
+  <!-- FL caster wheel mount -->
+  <link name="fl_caster_wheel_mount_link">
+    <inertial>
+      <origin xyz="-0.011459 -7.0567E-09 -0.011665" rpy="0 0 0" />
+      <mass value="0.047319" />
+      <inertia ixx="1.6675E-05" ixy="-8.0944E-11" ixz="-8.1003E-07"
+               iyy="2.9049E-05" iyz="-7.8988E-11" izz="3.76E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fl_caster_wheel_mount_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fl_caster_wheel_mount_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fl_caster_wheel_mount_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="fl_table_leg_link" />
+    <child link="fl_caster_wheel_mount_link" />
+  </joint>
+
+  <!-- FL caster wheel -->
+  <link name="fl_caster_wheel_link">
+    <inertial>
+      <origin xyz="0 -5.3545E-05 -1.1102E-16" rpy="0 0 0" />
+      <mass value="0.12084" />
+      <inertia ixx="4.6943E-05" ixy="2.8182E-17" ixz="-1.6458E-15"
+               iyy="7.6353E-05" iyz="4.9423E-17" izz="4.6943E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fl_caster_wheel_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fl_caster_wheel_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fl_caster_wheel_joint" type="fixed">
+    <origin xyz="-0.0325 0 -0.0595" rpy="0 0 0" />
+    <parent link="fl_caster_wheel_mount_link" />
+    <child link="fl_caster_wheel_link" />
+  </joint>
+
+  <!-- Front-right table leg -->
+  <link name="fr_table_leg_link">
+    <inertial>
+      <origin xyz="0 0 0.22347" rpy="0 0 0" />
+      <mass value="0.15157" />
+      <inertia ixx="0.0028107" ixy="-2.7017E-19" ixz="2.3161E-21"
+               iyy="0.0028135" iyz="-2.0835E-19" izz="5.0184E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fr_table_leg_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fr_table_leg_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fr_table_leg_joint" type="fixed">
+    <origin xyz="0.34 -0.698 -0.883" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="fr_table_leg_link" />
+  </joint>
+
+  <!-- FR caster wheel mount -->
+  <link name="fr_caster_wheel_mount_link">
+    <inertial>
+      <origin xyz="-0.011459 -7.0567E-09 -0.011665" rpy="0 0 0" />
+      <mass value="0.047319" />
+      <inertia ixx="1.6675E-05" ixy="-8.0944E-11" ixz="-8.1003E-07"
+               iyy="2.9049E-05" iyz="-7.8988E-11" izz="3.76E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fr_caster_wheel_mount_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fr_caster_wheel_mount_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fr_caster_wheel_mount_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="fr_table_leg_link" />
+    <child link="fr_caster_wheel_mount_link" />
+  </joint>
+
+  <!-- FR caster wheel -->
+  <link name="fr_caster_wheel_link">
+    <inertial>
+      <origin xyz="0 -5.3545E-05 0" rpy="0 0 0" />
+      <mass value="0.12084" />
+      <inertia ixx="4.6943E-05" ixy="2.8345E-17" ixz="-1.6458E-15"
+               iyy="7.6353E-05" iyz="4.9116E-17" izz="4.6943E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fr_caster_wheel_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/fr_caster_wheel_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fr_caster_wheel_joint" type="fixed">
+    <origin xyz="-0.0325 0 -0.0595" rpy="0 0 0" />
+    <parent link="fr_caster_wheel_mount_link" />
+    <child link="fr_caster_wheel_link" />
+  </joint>
+
+  <!-- Rear-left table leg -->
+  <link name="rl_table_leg_link">
+    <inertial>
+      <origin xyz="0 0 0.22347" rpy="0 0 0" />
+      <mass value="0.15157" />
+      <inertia ixx="0.0028107" ixy="-6.6369E-21" ixz="3.4765E-19"
+               iyy="0.0028135" iyz="-1.384E-18" izz="5.0184E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rl_table_leg_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rl_table_leg_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rl_table_leg_joint" type="fixed">
+    <origin xyz="-0.34 0.698 -0.883" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="rl_table_leg_link" />
+  </joint>
+
+  <!-- RL caster wheel mount -->
+  <link name="rl_caster_wheel_mount_link">
+    <inertial>
+      <origin xyz="-0.011459 -7.0567E-09 -0.011665" rpy="0 0 0" />
+      <mass value="0.047319" />
+      <inertia ixx="1.6675E-05" ixy="-8.0944E-11" ixz="-8.1003E-07"
+               iyy="2.9049E-05" iyz="-7.8988E-11" izz="3.76E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rl_caster_wheel_mount_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rl_caster_wheel_mount_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rl_caster_wheel_mount_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="rl_table_leg_link" />
+    <child link="rl_caster_wheel_mount_link" />
+  </joint>
+
+  <!-- RL caster wheel -->
+  <link name="rl_caster_wheel_link">
+    <inertial>
+      <origin xyz="0 -5.3545E-05 0" rpy="0 0 0" />
+      <mass value="0.12084" />
+      <inertia ixx="4.6943E-05" ixy="2.8308E-17" ixz="-1.6458E-15"
+               iyy="7.6353E-05" iyz="4.8989E-17" izz="4.6943E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rl_caster_wheel_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rl_caster_wheel_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rl_caster_wheel_joint" type="fixed">
+    <origin xyz="-0.0325 0 -0.0595" rpy="0 0 0" />
+    <parent link="rl_caster_wheel_mount_link" />
+    <child link="rl_caster_wheel_link" />
+  </joint>
+
+  <!-- Rear-right table leg -->
+  <link name="rr_table_leg_link">
+    <inertial>
+      <origin xyz="0 0 0.22347" rpy="0 0 0" />
+      <mass value="0.15157" />
+      <inertia ixx="0.0028107" ixy="-1.1843E-20" ixz="2.1315E-20"
+               iyy="0.0028135" iyz="-2.3739E-18" izz="5.0184E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rr_table_leg_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rr_table_leg_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rr_table_leg_joint" type="fixed">
+    <origin xyz="-0.34 -0.698 -0.883" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="rr_table_leg_link" />
+  </joint>
+
+  <!-- RR caster wheel mount -->
+  <link name="rr_caster_wheel_mount_link">
+    <inertial>
+      <origin xyz="-0.011459 -7.0567E-09 -0.011665" rpy="0 0 0" />
+      <mass value="0.047319" />
+      <inertia ixx="1.6675E-05" ixy="-8.0944E-11" ixz="-8.1003E-07"
+               iyy="2.9049E-05" iyz="-7.8988E-11" izz="3.76E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rr_caster_wheel_mount_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rr_caster_wheel_mount_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rr_caster_wheel_mount_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="rr_table_leg_link" />
+    <child link="rr_caster_wheel_mount_link" />
+  </joint>
+
+  <!-- RR caster wheel -->
+  <link name="rr_caster_wheel_link">
+    <inertial>
+      <origin xyz="0 -5.3545E-05 0" rpy="0 0 0" />
+      <mass value="0.12084" />
+      <inertia ixx="4.6943E-05" ixy="2.8252E-17" ixz="-1.6459E-15"
+               iyy="7.6353E-05" iyz="4.9045E-17" izz="4.6943E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rr_caster_wheel_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/rr_caster_wheel_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rr_caster_wheel_joint" type="fixed">
+    <origin xyz="-0.0325 0 -0.0595" rpy="0 0 0" />
+    <parent link="rr_caster_wheel_mount_link" />
+    <child link="rr_caster_wheel_link" />
+  </joint>
+
+  <!-- ======================== UR5 ARM ======================== -->
+  <!-- Mounted on the table top, flipped 180 deg (looking downward) -->
+  <!-- The UR5 base sits on the table surface, arm hangs below -->
+  <xacro:ur_robot
+    name="$(arg name)"
+    tf_prefix="$(arg tf_prefix)"
+    parent="base_link"
+    joint_limits_parameters_file="$(arg joint_limit_params)"
+    kinematics_parameters_file="$(arg kinematics_params)"
+    physical_parameters_file="$(arg physical_params)"
+    visual_parameters_file="$(arg visual_params)"
+    safety_limits="$(arg safety_limits)"
+    safety_pos_margin="$(arg safety_pos_margin)"
+    safety_k_position="$(arg safety_k_position)"
+    force_abs_paths="true"
+    >
+    <!-- Center of table, on the surface, flipped so arm points downward -->
+    <origin xyz="0 0 0" rpy="3.14159 0 0" />
+  </xacro:ur_robot>
+
+  <!-- ======================== GAZEBO ======================== -->
+  <gazebo reference="world">
+  </gazebo>
+  <gazebo>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(arg simulation_controllers)</parameters>
+      <ros>
+        <namespace>$(arg ros_namespace)</namespace>
+      </ros>
+    </plugin>
+  </gazebo>
+
+  <!-- ros2 control instance -->
+  <xacro:ur_ros2_control
+    name="$(arg name)"
+    tf_prefix="$(arg tf_prefix)"
+    transmission_hw_interface="$(arg transmission_hw_interface)"
+  />
+
+</robot>
