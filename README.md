@@ -1,95 +1,126 @@
 # UR5 Volcani Workspace
 
-UR5 arm mounted on the Volcaniarm table base for Gazebo simulation with ROS 2 Jazzy.
+A ROS 2 Jazzy workspace for simulating a UR5e robotic arm mounted upside-down on the Volcaniarm mobile table, with an RGBD camera for weed detection in agricultural environments.
 
-## Setup Instructions
+## Prerequisites
 
-### Clone the repository with submodules
+- Ubuntu 24.04
+- [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html)
+- Gazebo Harmonic (installed with ROS 2 Jazzy)
+
+## Quick Start
 
 ```bash
-mkdir -p <PATH>/ur5_ws
-cd <PATH>/ur5_ws
+# 1. Clone
+mkdir -p ~/ur5_ws && cd ~/ur5_ws
 git clone --recurse-submodules https://github.com/LevinTamir/ur5_ws.git .
-```
 
-If you already cloned without `--recurse-submodules`, initialize submodules manually:
-
-```bash
-git submodule update --init --recursive
-```
-
-### Install dependencies
-
-```bash
-# Install the Universal Robots driver for ROS 2 Jazzy
-sudo apt update
-sudo apt install ros-jazzy-ur
-
-# Install all ROS package dependencies
-cd <PATH>/ur5_ws
+# 2. Install dependencies
+sudo apt update && sudo apt install ros-jazzy-ur
 rosdep install --from-paths src --ignore-src -r -y
+
+# 3. Build
+colcon build && source install/setup.bash
+
+# 4. Launch
+ros2 launch ur5_volcani_description ur5_volcani_sim_moveit.launch.py
 ```
 
-> **Note:** If this is your first time using rosdep:
+> If you cloned without `--recurse-submodules`, run `git submodule update --init --recursive`
+
+> To auto-source the workspace, add to `~/.bashrc`:
 > ```bash
-> sudo rosdep init
-> rosdep update
+> source ~/ur5_ws/install/setup.bash
 > ```
 
-### Build
+## Launching
 
-```bash
-cd <PATH>/ur5_ws
-colcon build
-source install/setup.bash
-```
-
-> To auto-source in every terminal:
-> ```bash
-> echo "source <PATH>/ur5_ws/install/setup.bash" >> ~/.bashrc
-> ```
-
-## Launch
-
-### UR5 on table - Gazebo simulation with MoveIt
+### Simulation + MoveIt (default: lab world)
 
 ```bash
 ros2 launch ur5_volcani_description ur5_volcani_sim_moveit.launch.py
 ```
 
-### UR5 on table - Gazebo simulation only (no MoveIt)
+### Simulation only (no MoveIt)
 
 ```bash
 ros2 launch ur5_volcani_description ur5_volcani_sim_control.launch.py
 ```
 
-### With a specific world
+### Choose a world
 
 ```bash
-# Lab environment
-ros2 launch ur5_volcani_description ur5_volcani_sim_moveit.launch.py world_name:=lab
-
-# Field environment
+ros2 launch ur5_volcani_description ur5_volcani_sim_moveit.launch.py world_name:=lab    # default
 ros2 launch ur5_volcani_description ur5_volcani_sim_moveit.launch.py world_name:=feild
+ros2 launch ur5_volcani_description ur5_volcani_sim_moveit.launch.py world_name:=empty
 ```
 
-### Original UR5 simulation (standalone, no table)
+### Weed detection
+
+In a separate terminal (while the simulation is running):
 
 ```bash
-ros2 launch ur_simulation_gz ur_sim_moveit.launch.py
+ros2 run weed_detector weed_detection_node
+```
+
+Subscribes to the RGBD camera topics and publishes:
+- `/weed_position_raw` (`geometry_msgs/PointStamped`) — 3D weed location
+- `/weed_marker` (`visualization_msgs/Marker`) — RViz visualization marker
+
+### Send the arm to a detected position
+
+```bash
+ros2 action send_goal /move_action moveit_msgs/action/MoveGroup "{
+  request: {
+    group_name: 'ur_manipulator',
+    goal_constraints: [{
+      position_constraints: [{
+        header: {frame_id: 'base_link'},
+        link_name: 'tool0',
+        constraint_region: {
+          primitives: [{type: 2, dimensions: [0.01]}],
+          primitive_poses: [{position: {x: 0.124, y: 0.188, z: 0.733}, orientation: {w: 1.0}}]
+        },
+        weight: 1.0
+      }]
+    }]
+  }
+}"
+```
+
+### Troubleshooting: RViz jitters on launch
+
+This happens when old Gazebo processes are still running. Kill them before relaunching:
+
+```bash
+pkill -9 -f "gz sim"; pkill -9 -f "ruby.*gz"; pkill -9 -f "parameter_bridge"; pkill -9 -f "robot_state_publisher"; pkill -9 -f "spawner"; pkill -9 -f "rviz2"; pkill -9 -f "move_group"; pkill -9 -f "wait_for_robot"
 ```
 
 ## Project Structure
 
 ```
 ur5_ws/
-  src/
-    ur_simulation_gz/          # Git submodule - UR Gazebo simulation package
-    ur5_volcani_description/   # UR5 on volcaniarm table - URDF, launch, worlds
-      urdf/                    # Combined URDF (table + UR5)
-      launch/                  # Launch files for simulation
-      meshes/                  # Volcaniarm table meshes
-      worlds/                  # Gazebo world files (empty, lab, feild)
-      models/                  # Gazebo models (plants, trees, etc.)
-      config/                  # Controller configuration
+├── src/
+│   ├── ur_simulation_gz/              # [submodule] UR Gazebo simulation package
+│   │
+│   ├── ur5_volcani_description/       # Main package: UR5 on volcaniarm table
+│   │   ├── urdf/                      #   URDF/Xacro (table + UR5 + camera)
+│   │   ├── srdf/                      #   MoveIt semantic description
+│   │   ├── launch/                    #   Launch files (sim, MoveIt, etc.)
+│   │   ├── config/                    #   ros2_control controller config
+│   │   ├── rviz/                      #   RViz config (MoveIt + camera views)
+│   │   ├── meshes/                    #   Table, legs, wheels, camera STLs
+│   │   ├── worlds/                    #   Gazebo worlds (empty, lab, field)
+│   │   ├── models/                    #   Gazebo models (plants, trees, terrain)
+│   │   └── scripts/                   #   Collision object publisher
+│   │
+│   └── weed_detector/                 # Weed detection via HSV + depth camera
+│       └── weed_detector_py/          #   Python node (subscribes RGBD, publishes 3D position)
 ```
+
+## Robot Description
+
+- **Base**: Volcaniarm mobile table (red top, 4 legs with caster wheels) at 0.98m height
+- **Arm**: UR5e mounted on the table surface, flipped 180 deg (pointing downward)
+- **Camera**: RealSense D435i-style RGBD camera on an adjustable mount on the table
+- **Home position**: Elbow folded so the arm fits under the table height
