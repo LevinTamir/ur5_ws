@@ -1,5 +1,8 @@
 import os
+from os import pathsep
+from pathlib import Path
 
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
@@ -39,14 +42,17 @@ def launch_setup(context, *args, **kwargs):
     world_name = LaunchConfiguration("world_name")
 
     pkg_share = FindPackageShare("ur5_volcani_description")
+    pkg_share_dir = get_package_share_directory("ur5_volcani_description")
 
     # Build world file path from world_name
     world_file = PathJoinSubstitution([pkg_share, "worlds", PythonExpression(
         ["'", world_name, "'", " + '.sdf'"]
     )])
 
-    # Set GZ_SIM_RESOURCE_PATH so Gazebo can find our models
-    model_path = PathJoinSubstitution([pkg_share, "models"])
+    # Set GZ_SIM_RESOURCE_PATH: parent of share dir (for package:// URI resolution)
+    # plus models dir (for model:// URI resolution in SDF worlds)
+    model_path = str(Path(pkg_share_dir).parent.resolve())
+    model_path += pathsep + os.path.join(pkg_share_dir, "models")
 
     robot_description_content = Command(
         [
@@ -122,6 +128,12 @@ def launch_setup(context, *args, **kwargs):
             "-string", robot_description_content,
             "-name", "ur",
             "-allow_renaming", "true",
+            "-J", "shoulder_pan_joint", "0.0",
+            "-J", "shoulder_lift_joint", "-1.57",
+            "-J", "elbow_joint", "1.57",
+            "-J", "wrist_1_joint", "-1.57",
+            "-J", "wrist_2_joint", "0.0",
+            "-J", "wrist_3_joint", "0.0",
         ],
     )
 
@@ -143,6 +155,18 @@ def launch_setup(context, *args, **kwargs):
         executable="parameter_bridge",
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
+            "/rgbd_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "/rgbd_camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/rgbd_camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/rgbd_camera/depth_image_camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "/rgbd_camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+        ],
+        remappings=[
+            ("/rgbd_camera/image", "/camera/color/image_raw"),
+            ("/rgbd_camera/camera_info", "/camera/color/camera_info"),
+            ("/rgbd_camera/depth_image", "/camera/aligned_depth_to_color/image_raw"),
+            ("/rgbd_camera/depth_image_camera_info", "/camera/aligned_depth_to_color/camera_info"),
+            ("/rgbd_camera/points", "/camera/depth/color/points"),
         ],
         output="screen",
     )
@@ -238,7 +262,7 @@ def generate_launch_description():
         DeclareLaunchArgument("gazebo_gui", default_value="true", description="Start Gazebo with GUI?")
     )
     declared_arguments.append(
-        DeclareLaunchArgument("world_name", default_value="empty",
+        DeclareLaunchArgument("world_name", default_value="lab",
                               description="World name (without .sdf extension): empty, lab, or feild.")
     )
 

@@ -29,11 +29,11 @@
   <joint name="world_to_base" type="fixed">
     <origin xyz="0 0 0.98" rpy="0 0 3.14159" />
     <parent link="world" />
-    <child link="base_link" />
+    <child link="table_top_link" />
   </joint>
 
-  <!-- ======================== TABLE TOP (base_link) ======================== -->
-  <link name="base_link">
+  <!-- ======================== TABLE TOP ======================== -->
+  <link name="table_top_link">
     <inertial>
       <origin xyz="0.0033183 1.7612E-06 -0.24794" rpy="0 0 0" />
       <mass value="5.4796" />
@@ -85,7 +85,7 @@
   </link>
   <joint name="fl_table_leg_joint" type="fixed">
     <origin xyz="0.34 0.698 -0.883" rpy="0 0 0" />
-    <parent link="base_link" />
+    <parent link="table_top_link" />
     <child link="fl_table_leg_link" />
   </joint>
 
@@ -175,7 +175,7 @@
   </link>
   <joint name="fr_table_leg_joint" type="fixed">
     <origin xyz="0.34 -0.698 -0.883" rpy="0 0 0" />
-    <parent link="base_link" />
+    <parent link="table_top_link" />
     <child link="fr_table_leg_link" />
   </joint>
 
@@ -265,7 +265,7 @@
   </link>
   <joint name="rl_table_leg_joint" type="fixed">
     <origin xyz="-0.34 0.698 -0.883" rpy="0 0 0" />
-    <parent link="base_link" />
+    <parent link="table_top_link" />
     <child link="rl_table_leg_link" />
   </joint>
 
@@ -355,7 +355,7 @@
   </link>
   <joint name="rr_table_leg_joint" type="fixed">
     <origin xyz="-0.34 -0.698 -0.883" rpy="0 0 0" />
-    <parent link="base_link" />
+    <parent link="table_top_link" />
     <child link="rr_table_leg_link" />
   </joint>
 
@@ -419,13 +419,149 @@
     <child link="rr_caster_wheel_link" />
   </joint>
 
+  <!-- ======================== CAMERA MOUNT ======================== -->
+
+  <xacro:property name="camera_mount_x" value="0.25" />
+  <xacro:property name="camera_mount_pitch" value="1.3" />
+
+  <link name="camera_mount_linear_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.1" />
+      <inertia ixx="1e-4" ixy="0" ixz="0" iyy="1e-4" iyz="0" izz="1e-4" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/camera_mount_linear_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/camera_mount_linear_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="camera_mount_linear_joint" type="fixed">
+    <origin xyz="${camera_mount_x} 0 0.04" rpy="0 0 0" />
+    <parent link="table_top_link" />
+    <child link="camera_mount_linear_link" />
+  </joint>
+
+  <link name="camera_mount_rev_link">
+    <inertial>
+      <origin xyz="-0.00010268 -1.5812E-06 0.01215" rpy="0 0 0" />
+      <mass value="0.006837" />
+      <inertia ixx="2.4745E-06" ixy="8.8137E-13" ixz="-4.848E-10"
+               iyy="2.6062E-07" iyz="-1.1636E-11" izz="2.5357E-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 1.5708 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/camera_mount_rev_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 1.5708 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/camera_mount_rev_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="camera_mount_rev_joint" type="fixed">
+    <origin xyz="0.192 0 -0.029"
+            rpy="3.14159265358979 ${camera_mount_pitch} 3.14159265358979" />
+    <parent link="camera_mount_linear_link" />
+    <child link="camera_mount_rev_link" />
+  </joint>
+
+  <link name="camera_link">
+    <inertial>
+      <origin xyz="-6.0219E-07 0.00024591 0.011952" rpy="0 0 0" />
+      <mass value="0.044753" />
+      <inertia ixx="2.7362E-05" ixy="3.9858E-09" ixz="7.9052E-10"
+               iyy="3.9447E-06" iyz="2.4433E-07" izz="2.7278E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 1.5708 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/camera_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 1.5708 0" />
+      <geometry>
+        <mesh filename="package://ur5_volcani_description/meshes/camera_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <origin xyz="0.016 0 0" rpy="3.14159 0 0" />
+    <parent link="camera_mount_rev_link" />
+    <child link="camera_link" />
+  </joint>
+
+  <!-- Camera optical frame -->
+  <link name="camera_link_optical" />
+  <joint name="camera_optical_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708" />
+    <parent link="camera_link" />
+    <child link="camera_link_optical" />
+  </joint>
+
+  <!-- Gazebo RGBD camera sensor -->
+  <gazebo reference="camera_link">
+    <sensor name="rgbd_camera" type="rgbd_camera">
+      <camera>
+        <horizontal_fov>1.25</horizontal_fov>
+        <image>
+          <width>848</width>
+          <height>480</height>
+        </image>
+        <clip>
+          <near>0.3</near>
+          <far>15</far>
+        </clip>
+      </camera>
+      <always_on>1</always_on>
+      <update_rate>30</update_rate>
+      <visualize>true</visualize>
+      <topic>rgbd_camera</topic>
+      <gz_frame_id>camera_link</gz_frame_id>
+    </sensor>
+  </gazebo>
+
+  <!-- Preserve camera fixed joints in Gazebo -->
+  <gazebo reference="camera_mount_linear_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="camera_mount_rev_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="camera_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="camera_optical_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+
   <!-- ======================== UR5 ARM ======================== -->
   <!-- Mounted on the table top, flipped 180 deg (looking downward) -->
   <!-- The UR5 base sits on the table surface, arm hangs below -->
   <xacro:ur_robot
     name="$(arg name)"
     tf_prefix="$(arg tf_prefix)"
-    parent="base_link"
+    parent="table_top_link"
     joint_limits_parameters_file="$(arg joint_limit_params)"
     kinematics_parameters_file="$(arg kinematics_params)"
     physical_parameters_file="$(arg physical_params)"
@@ -442,6 +578,48 @@
   <!-- ======================== GAZEBO ======================== -->
   <gazebo reference="world">
   </gazebo>
+
+  <!-- Preserve fixed joints so Gazebo renders the table visuals -->
+  <gazebo reference="world_to_base">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="fl_table_leg_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="fl_caster_wheel_mount_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="fl_caster_wheel_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="fr_table_leg_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="fr_caster_wheel_mount_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="fr_caster_wheel_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="rl_table_leg_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="rl_caster_wheel_mount_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="rl_caster_wheel_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="rr_table_leg_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="rr_caster_wheel_mount_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="rr_caster_wheel_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+
   <gazebo>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <parameters>$(arg simulation_controllers)</parameters>
@@ -451,11 +629,12 @@
     </plugin>
   </gazebo>
 
-  <!-- ros2 control instance -->
+  <!-- ros2 control instance with folded initial position (arm fits under the table) -->
   <xacro:ur_ros2_control
     name="$(arg name)"
     tf_prefix="$(arg tf_prefix)"
     transmission_hw_interface="$(arg transmission_hw_interface)"
+    initial_positions="${dict(shoulder_pan_joint=0.0,shoulder_lift_joint=-1.57,elbow_joint=1.57,wrist_1_joint=-1.57,wrist_2_joint=0.0,wrist_3_joint=0.0)}"
   />
 
 </robot>

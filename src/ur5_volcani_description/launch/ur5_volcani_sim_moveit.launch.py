@@ -2,6 +2,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -10,7 +11,6 @@ def launch_setup(context, *args, **kwargs):
     safety_limits = LaunchConfiguration("safety_limits")
     controllers_file = LaunchConfiguration("controllers_file")
     description_file = LaunchConfiguration("description_file")
-    moveit_launch_file = LaunchConfiguration("moveit_launch_file")
     world_name = LaunchConfiguration("world_name")
 
     ur_control_launch = IncludeLaunchDescription(
@@ -30,7 +30,11 @@ def launch_setup(context, *args, **kwargs):
     )
 
     ur_moveit_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(moveit_launch_file),
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [FindPackageShare("ur_moveit_config"), "launch", "ur_moveit.launch.py"]
+            )
+        ),
         launch_arguments={
             "ur_type": ur_type,
             "use_sim_time": "true",
@@ -38,7 +42,15 @@ def launch_setup(context, *args, **kwargs):
         }.items(),
     )
 
-    return [ur_control_launch, ur_moveit_launch]
+    collision_publisher = Node(
+        package="ur5_volcani_description",
+        executable="publish_collision_objects.py",
+        name="collision_object_publisher",
+        output="screen",
+        parameters=[{"use_sim_time": True}],
+    )
+
+    return [ur_control_launch, ur_moveit_launch, collision_publisher]
 
 
 def generate_launch_description():
@@ -75,16 +87,7 @@ def generate_launch_description():
         )
     )
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "moveit_launch_file",
-            default_value=PathJoinSubstitution(
-                [FindPackageShare("ur_moveit_config"), "launch", "ur_moveit.launch.py"]
-            ),
-            description="MoveIt launch file path.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument("world_name", default_value="empty",
+        DeclareLaunchArgument("world_name", default_value="lab",
                               description="World name (without .sdf): empty, lab, or feild.")
     )
 
