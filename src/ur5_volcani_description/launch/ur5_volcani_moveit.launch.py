@@ -77,7 +77,7 @@ def generate_launch_description():
     )
 
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("ur_moveit_config"), "config", "moveit.rviz"]
+        [FindPackageShare("ur5_volcani_description"), "rviz", "config.rviz"]
     )
     rviz_node = Node(
         package="rviz2",

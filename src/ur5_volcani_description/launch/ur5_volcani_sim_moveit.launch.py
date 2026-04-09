@@ -32,7 +32,7 @@ def launch_setup(context, *args, **kwargs):
     ur_moveit_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution(
-                [FindPackageShare("ur_moveit_config"), "launch", "ur_moveit.launch.py"]
+                [FindPackageShare("ur5_volcani_description"), "launch", "ur5_volcani_moveit.launch.py"]
             )
         ),
         launch_arguments={

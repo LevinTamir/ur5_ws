@@ -27,7 +27,7 @@
 
   <!-- Table top at 0.98m height, rotated 180 deg yaw (same as volcaniarm) -->
   <joint name="world_to_base" type="fixed">
-    <origin xyz="0 0 0.98" rpy="0 0 3.14159" />
+    <origin xyz="0 0 0.98" rpy="0 0 0" />
     <parent link="world" />
     <child link="table_top_link" />
   </joint>
