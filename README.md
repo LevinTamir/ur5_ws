@@ -2,12 +2,6 @@
 
 A ROS 2 Jazzy workspace for simulating a UR5e robotic arm mounted upside-down on the Volcaniarm mobile table, with an RGBD camera for weed detection in agricultural environments.
 
-## Prerequisites
-
-- Ubuntu 24.04
-- [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html)
-- Gazebo Harmonic (installed with ROS 2 Jazzy)
-
 ## Quick Start
 
 ```bash
@@ -88,14 +82,6 @@ ros2 action send_goal /move_action moveit_msgs/action/MoveGroup "{
 }"
 ```
 
-### Troubleshooting: RViz jitters on launch
-
-This happens when old Gazebo processes are still running. Kill them before relaunching:
-
-```bash
-pkill -9 -f "gz sim"; pkill -9 -f "ruby.*gz"; pkill -9 -f "parameter_bridge"; pkill -9 -f "robot_state_publisher"; pkill -9 -f "spawner"; pkill -9 -f "rviz2"; pkill -9 -f "move_group"; pkill -9 -f "wait_for_robot"
-```
-
 ## Project Structure
 
 ```
@@ -117,10 +103,3 @@ ur5_ws/
 │   └── weed_detector/                 # Weed detection via HSV + depth camera
 │       └── weed_detector_py/          #   Python node (subscribes RGBD, publishes 3D position)
 ```
-
-## Robot Description
-
-- **Base**: Volcaniarm mobile table (red top, 4 legs with caster wheels) at 0.98m height
-- **Arm**: UR5e mounted on the table surface, flipped 180 deg (pointing downward)
-- **Camera**: RealSense D435i-style RGBD camera on an adjustable mount on the table
-- **Home position**: Elbow folded so the arm fits under the table height
